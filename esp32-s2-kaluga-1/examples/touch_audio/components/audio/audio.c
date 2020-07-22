@@ -322,7 +322,7 @@ int audio_init(led_strip_t *strip)
 
     xTaskCreate(audio_task, "audio_task", 4096, NULL, 5, NULL);
 
-    xTaskCreate(audio_control_task, "audio_control_task", 2048, strip, 5, NULL);
+    // xTaskCreate(audio_control_task, "audio_control_task", 2048, strip, 5, NULL);
 
     return 0;
 }

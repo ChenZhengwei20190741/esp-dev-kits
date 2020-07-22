@@ -32,6 +32,7 @@ static const char *TAG = "main";
 
 #define CAM_WIDTH   (320)
 #define CAM_HIGH    (240)
+#define JPEG_INIT  0
 
 static void cam_task(void *arg)
 {
@@ -56,12 +57,12 @@ static void cam_task(void *arg)
 
     cam_config_t cam_config = {
         .bit_width    = 8,
-#ifdef CONFIG_CAMERA_JPEG_MODE
+#if JPEG_INIT
         .mode.jpeg    = 1,
 #else
         .mode.jpeg    = 0,
 #endif
-        .xclk_fre     = 16 * 1000 * 1000,
+        .xclk_fre     = 10 * 1000 * 1000,
         .pin  = {
             .xclk     = CAM_XCLK,
             .pclk     = CAM_PCLK,
@@ -77,7 +78,7 @@ static void cam_task(void *arg)
         },
         .max_buffer_size = 8 * 1024,
         .task_stack      = 1024,
-        .task_pri        = configMAX_PRIORITIES
+        .task_pri        = 3
     };
 
     /*!< With PingPang buffers, the frame rate is higher, or you can use a separate buffer to save memory */
@@ -151,7 +152,7 @@ static void cam_task(void *arg)
     while (1) {
         uint8_t *cam_buf = NULL;
         cam_take(&cam_buf);
-#ifdef CONFIG_CAMERA_JPEG_MODE
+#if JPEG_INIT
 
         int w, h;
         uint8_t *img = jpeg_decode(cam_buf, &w, &h);
@@ -181,7 +182,18 @@ fail:
     vTaskDelete(NULL);
 }
 
+static void test_task(void *arg)
+{
+    while(1)
+    {
+       
+    }
+}
+
+void wifi_init();
 void app_main()
 {
-    xTaskCreate(cam_task, "cam_task", 2048, NULL, configMAX_PRIORITIES, NULL);
+    // wifi_init();
+    // xTaskCreate(test_task, "test_task", 2048, NULL, 5, NULL);
+    xTaskCreate(cam_task, "cam_task", 2048, NULL, 1, NULL);
 }
