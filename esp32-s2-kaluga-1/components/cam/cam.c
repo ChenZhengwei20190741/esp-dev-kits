@@ -518,7 +518,7 @@ esp_err_t cam_init(const cam_config_t *config)
         cam_obj->frame2_buffer_en = 0;
     }
 
-    esp_intr_alloc(ETS_I2S0_INTR_SOURCE, 0, cam_isr, NULL, &cam_obj->intr_handle);
+    esp_intr_alloc(ETS_I2S0_INTR_SOURCE, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_IRAM, cam_isr, NULL, &cam_obj->intr_handle);
     xTaskCreate(cam_task, "cam_task", config->task_stack, NULL, config->task_pri, &cam_obj->task_handle);
     return ESP_OK;
 }
