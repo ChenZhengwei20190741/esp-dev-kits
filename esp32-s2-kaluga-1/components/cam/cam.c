@@ -178,7 +178,7 @@ static void cam_set_pin(const cam_config_t *config)
 {
     gpio_config_t io_conf = {0};
     io_conf.intr_type = config->vsync_invert ? GPIO_PIN_INTR_NEGEDGE : GPIO_PIN_INTR_POSEDGE;
-    io_conf.pin_bit_mask = 1 << config->pin.vsync;
+    io_conf.pin_bit_mask = 1ULL << config->pin.vsync;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pull_up_en = 1;
     io_conf.pull_down_en = 0;
@@ -467,16 +467,19 @@ esp_err_t cam_deinit()
     if (!cam_obj) {
         return ESP_FAIL;
     }
-
+    int ret = 0;
+    ret = esp_intr_free(cam_obj->intr_handle);
     cam_stop();
-    esp_intr_free(cam_obj->intr_handle);
+    printf("ret = %d\n", ret);
+    cam_obj->intr_handle = NULL;
+    // i2s_destroy_dma_queue();
     vTaskDelete(cam_obj->task_handle);
     vQueueDelete(cam_obj->event_queue);
     vQueueDelete(cam_obj->frame_buffer_queue);
     free(cam_obj->dma);
     free(cam_obj->buffer);
     free(cam_obj);
-
+periph_module_disable(PERIPH_I2S0_MODULE);
     return ESP_OK;
 }
 
@@ -517,8 +520,11 @@ esp_err_t cam_init(const cam_config_t *config)
     } else {
         cam_obj->frame2_buffer_en = 0;
     }
+  static int cnt = 0;
+ 
 
-    esp_intr_alloc(ETS_I2S0_INTR_SOURCE, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_IRAM, cam_isr, NULL, &cam_obj->intr_handle);
+    esp_intr_alloc(ETS_I2S0_INTR_SOURCE, ESP_INTR_FLAG_LEVEL2 | ESP_INTR_FLAG_IRAM, cam_isr, NULL, &cam_obj->intr_handle);
+    // esp_intr_alloc(ETS_I2S0_INTR_SOURCE, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_IRAM, cam_isr, NULL, &cam_obj->intr_handle);
     xTaskCreate(cam_task, "cam_task", config->task_stack, NULL, config->task_pri, &cam_obj->task_handle);
     return ESP_OK;
 }
